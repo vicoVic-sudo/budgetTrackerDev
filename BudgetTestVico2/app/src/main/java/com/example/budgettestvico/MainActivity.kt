@@ -5,19 +5,29 @@ import android.os.Bundle
 import android.content.Intent
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.budgettestvico.databinding.ActivityMainBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
+    // variables to calculate the actual budget
     private lateinit var transactions : ArrayList<Transaction>
     private lateinit var transactionAdapter: TransactionAdapter
     private lateinit var linearLayoutManager: LinearLayoutManager
 
+    // variables to auth in firebase
     private lateinit var auth : FirebaseAuth
+
+    // variables to read data
+
+    private lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,24 +41,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.txtNameBalance).text = name + "'s Balance"
 
         //here is where the data from rtdb is going to end
-        transactions = arrayListOf(
-            Transaction("Weekend budget", 400.00),
-            Transaction("Apples", -30.00),
-            Transaction("Cereal", -45.00),
-            Transaction("Cheetos", -25.00),
-            Transaction("Food", -200.00),
-            Transaction("Weekend budget", 400.00)
-        )
 
-        transactionAdapter = TransactionAdapter(transactions)
-        linearLayoutManager = LinearLayoutManager(this)
-
-        recyclerview.apply {
-            adapter = transactionAdapter
-            layoutManager = linearLayoutManager
-        }
-
-        updateDashboard()
+        // starting of querying information
+        readData()
 
         addBtn.setOnClickListener{
             val intent = Intent(this, AddTransactionActivity::class.java)
@@ -63,6 +58,39 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+
+    private fun readData(){
+        database = FirebaseDatabase.getInstance().getReference("expenses")
+        database.child("despensa").get().addOnSuccessListener {
+            // here is the action once the data is obtained
+
+            if(it.exists()){
+                val tittle = it.child("description").value
+                val amount = it.child("amount").value.toString().toDouble()
+
+
+
+                transactions = arrayListOf(
+                    Transaction("" + tittle + "", amount)
+                )
+
+                transactionAdapter = TransactionAdapter(transactions)
+                linearLayoutManager = LinearLayoutManager(this)
+
+                recyclerview.apply {
+                    adapter = transactionAdapter
+                    layoutManager = linearLayoutManager
+                }
+
+                updateDashboard()
+
+            }
+
+        }.addOnFailureListener {
+            Toast.makeText(this, "Failed getting info", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun updateDashboard(){
         val totalAmount = transactions.map { it.amount }.sum()
         val budgetAmount = transactions.filter { it.amount > 0 }.map{it.amount}.sum()
@@ -73,4 +101,5 @@ class MainActivity : AppCompatActivity() {
         expense.text = "$ %.2f".format(expenseAmount)
 
     }
+
 }
