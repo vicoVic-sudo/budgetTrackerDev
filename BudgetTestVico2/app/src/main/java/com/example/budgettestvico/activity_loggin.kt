@@ -62,16 +62,20 @@ class activity_loggin : AppCompatActivity() {
     }
 
     private fun updateUI(account: GoogleSignInAccount) {
+
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         auth.signInWithCredential(credential).addOnCompleteListener{
             if(it.isSuccessful){
                 val intent = Intent(this, MainActivity :: class.java)
                 intent.putExtra("email", account.email)
                 intent.putExtra("name", account.displayName)
+
                 startActivity(intent)
+
             }else{
                 Toast.makeText(this, it.exception.toString(), Toast.LENGTH_LONG).show()
             }
         }
+
     }
 }

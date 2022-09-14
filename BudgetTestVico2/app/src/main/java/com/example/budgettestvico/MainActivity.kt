@@ -30,15 +30,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         auth = FirebaseAuth.getInstance()
-
-        val email = intent.getStringExtra("email")
-        val name = intent.getStringExtra("name")
-
-        findViewById<TextView>(R.id.txtNameBalance).text = name + "'s Balance"
 
         //here is where the data from rtdb is going to end
 
@@ -57,24 +53,29 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-
-
     private fun readData(){
         database = FirebaseDatabase.getInstance().getReference("expenses")
-        database.child("despensa").get().addOnSuccessListener {
+        database.child("" + auth.uid + "").get().addOnSuccessListener {
             // here is the action once the data is obtained
 
             if(it.exists()){
-                val tittle = it.child("description").value
-                val amount = it.child("amount").value.toString().toDouble()
+
+                transactions = arrayListOf<Transaction>()
+
+                it.children.forEach { child ->
+                    var tittle = child.child("description").value.toString()
+                    var amount = child.child("amount").value.toString().toDouble()
+
+                    transactions.add(
+                        Transaction("" + tittle + "", amount)
+                    )
+
+                }
 
 
-
-                transactions = arrayListOf(
-                    Transaction("" + tittle + "", amount)
-                )
 
                 transactionAdapter = TransactionAdapter(transactions)
+
                 linearLayoutManager = LinearLayoutManager(this)
 
                 recyclerview.apply {
@@ -82,7 +83,27 @@ class MainActivity : AppCompatActivity() {
                     layoutManager = linearLayoutManager
                 }
 
-                updateDashboard()
+                updateDashboard();
+
+                /*
+
+                val tittle = it.child("description").value
+                val amount = it.child("amount").value.toString().toDouble()
+
+                transactions = arrayListOf(
+                    Transaction("" + tittle + "", amount)
+                )
+
+                transactionAdapter = TransactionAdapter(transactions)
+
+                linearLayoutManager = LinearLayoutManager(this)
+
+                recyclerview.apply {
+                    adapter = transactionAdapter
+                    layoutManager = linearLayoutManager
+                }
+
+                updateDashboard() */
 
             }
 
@@ -99,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         balance.text = "$ %.2f".format(totalAmount)
         budget.text = "$ %.2f".format(budgetAmount)
         expense.text = "$ %.2f".format(expenseAmount)
-
     }
+
 
 }

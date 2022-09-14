@@ -1,10 +1,12 @@
 package com.example.budgettestvico
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.example.budgettestvico.databinding.ActivityMainBinding
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_add_transaction.*
@@ -14,10 +16,15 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
     private lateinit var database : DatabaseReference
+    private lateinit var auth : FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         var flag = 0;
+
+        auth = FirebaseAuth.getInstance()
+        println("Variable UID");
+        println(auth.uid);
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
@@ -54,12 +61,17 @@ class AddTransactionActivity : AppCompatActivity() {
                 // Here is where I gonna code the write operation once I validated that the text box has something
                 Toast.makeText(this, "Writting", Toast.LENGTH_LONG).show()
 
-                database = FirebaseDatabase.getInstance().getReference("expenses")
+                database = FirebaseDatabase.getInstance().getReference("expenses/")
 
                 val Expense = expenses(label, amount)
 
-                database.child(label).setValue(Expense).addOnSuccessListener {
+                database.child(""  + auth.uid).push().setValue(Expense).addOnSuccessListener {
+
+
                     Toast.makeText(this, "Done", Toast.LENGTH_LONG).show()
+
+
+
                 }.addOnFailureListener{
                     Toast.makeText(this, "Failed", Toast.LENGTH_LONG).show()
                 }
@@ -70,7 +82,8 @@ class AddTransactionActivity : AppCompatActivity() {
         }
 
         closeBtn.setOnClickListener {
-            finish()
+            val intent = Intent(this, MainActivity :: class.java)
+            startActivity(intent)
         }
     }
 }
